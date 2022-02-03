@@ -15,11 +15,11 @@ public static class Extensions
                 serviceCollection.ForSpeck<SpeckSingletonAttribute>(type, x => serviceCollection.AddSingleton(type));
                 serviceCollection.ForSpeck<SpeckSingletonAsAttribute>(type, x => serviceCollection.AddSingleton(x.Type, type));
 
-                serviceCollection.ForSpeck<SpeckTransientAttribute>(type, x => serviceCollection.AddSingleton(type));
-                serviceCollection.ForSpeck<SpeckTransientAsAttribute>(type, x => serviceCollection.AddSingleton(x.Type, type));
+                serviceCollection.ForSpeck<SpeckTransientAttribute>(type, x => serviceCollection.AddTransient(type));
+                serviceCollection.ForSpeck<SpeckTransientAsAttribute>(type, x => serviceCollection.AddTransient(x.Type, type));
 
-                serviceCollection.ForSpeck<SpeckScopedAttribute>(type, x => serviceCollection.AddSingleton(type));
-                serviceCollection.ForSpeck<SpeckScopedAsAttribute>(type, x => serviceCollection.AddSingleton(x.Type, type));
+                serviceCollection.ForSpeck<SpeckScopedAttribute>(type, x => serviceCollection.AddScoped(type));
+                serviceCollection.ForSpeck<SpeckScopedAsAttribute>(type, x => serviceCollection.AddScoped(x.Type, type));
             }
         }
 
