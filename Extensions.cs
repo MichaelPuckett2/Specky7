@@ -12,14 +12,14 @@ public static class Extensions
         {
             foreach (var type in assembly.GetTypes())
             {
-                serviceCollection.ForSpeck<SpeckSingletonAttribute>(type, x => serviceCollection.AddSingleton(type));
-                serviceCollection.ForSpeck<SpeckSingletonAsAttribute>(type, x => serviceCollection.AddSingleton(x.Type, type));
+                serviceCollection.ForSpeck<SingletonAttribute>(type, x => serviceCollection.AddSingleton(type));
+                serviceCollection.ForSpeck<SingletonAsAttribute>(type, x => serviceCollection.AddSingleton(x.Type, type));
 
-                serviceCollection.ForSpeck<SpeckTransientAttribute>(type, x => serviceCollection.AddTransient(type));
-                serviceCollection.ForSpeck<SpeckTransientAsAttribute>(type, x => serviceCollection.AddTransient(x.Type, type));
+                serviceCollection.ForSpeck<TransientAttribute>(type, x => serviceCollection.AddTransient(type));
+                serviceCollection.ForSpeck<TransientAsAttribute>(type, x => serviceCollection.AddTransient(x.Type, type));
 
-                serviceCollection.ForSpeck<SpeckScopedAttribute>(type, x => serviceCollection.AddScoped(type));
-                serviceCollection.ForSpeck<SpeckScopedAsAttribute>(type, x => serviceCollection.AddScoped(x.Type, type));
+                serviceCollection.ForSpeck<ScopedAttribute>(type, x => serviceCollection.AddScoped(type));
+                serviceCollection.ForSpeck<ScopedAsAttribute>(type, x => serviceCollection.AddScoped(x.Type, type));
             }
         }
 

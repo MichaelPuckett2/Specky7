@@ -1,4 +1,4 @@
 ﻿namespace Specky6;
 
 [AttributeUsage(AttributeTargets.Class)]
-public class SpeckScopedAttribute : Attribute { }
+public class SingletonAttribute : Attribute { }
