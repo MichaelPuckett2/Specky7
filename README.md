@@ -1,6 +1,10 @@
 # Specky6
 Lightweight wrapper to assist injection, using attributes, using the built in DI model integrated in .NET 6 and up.
 
+## Required at builder.Services to add Specks
+
+    builder.Services.AddSpecks();
+
 ## Examples (If you're familiar with .NET's built in injection then the naming here should be straight forward.)
 ## Transient
 Transient will inject a new instance for every request.
@@ -40,9 +44,6 @@ Singleton will inject a the same instance for the lifetime of the application.
 
     // Equivalent to builder.Services.AddSingleton<IMyClass, MyClass>();
 
-## Required at builder.Services to add Specks
-
-    builder.Services.AddSpecks();
 
 ## Using Speck attributes across multiple projects / assemblies
 In order to scan for specks across multiple assemblies you need to pass those assemblies to the AddSpecks method.
