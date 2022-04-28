@@ -1,6 +1,6 @@
 ﻿namespace Specky6;
 
-[AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class TransientAsAttribute : Attribute
 {
     public TransientAsAttribute(Type type) => Type = type;

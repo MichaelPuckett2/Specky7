@@ -1,4 +1,4 @@
 ﻿namespace Specky6;
 
-[AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class SingletonAttribute : Attribute { }

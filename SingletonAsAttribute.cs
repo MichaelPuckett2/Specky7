@@ -1,6 +1,6 @@
 ﻿namespace Specky6;
 
-[AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class SingletonAsAttribute : Attribute
 {
     public SingletonAsAttribute(Type type) => Type = type;
