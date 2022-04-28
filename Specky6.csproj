@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<Version>1.0.1</Version>
+		<Version>1.1.0</Version>
 		<Description>Assist injection, using attributes, using the built in DI model integrated in .NET 6 and up.</Description>
 		<Copyright>2022</Copyright>
 		<PackageProjectUrl>https://github.com/MichaelPuckett2/Specky6</PackageProjectUrl>
