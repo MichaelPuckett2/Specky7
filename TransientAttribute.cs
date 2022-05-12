@@ -1,4 +1,3 @@
 ﻿namespace Specky6;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class TransientAttribute : Attribute { }
+public class TransientAttribute : SpeckAttribute { }
