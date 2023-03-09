@@ -40,12 +40,12 @@ Scoped will inject a new instance for every session, typically, in a web app for
 ## Singleton
 Singleton will inject a the same instance for the lifetime of the application.
 
-    [Scoped]
+    [Singleton]
     public class MyClass { ... }    
 
     // Or
 
-    [ScopedAs(typeof(IMyClass))]
+    [SingletonAs(typeof(IMyClass))]
     public class MyClass : IMyClass { ... }
 
 ## Using Speck attributes across multiple projects / assemblies
