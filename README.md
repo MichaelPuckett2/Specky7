@@ -9,7 +9,7 @@ Lightweight wrapper to assist injection, using attributes, using the built in DI
 
 ### Transient, Scoped, or Singleton attributes inject the type as the implementation. 
 
--   Example: builder.Services.AddScoped<MyClass>();
+-   Example: builder.Services.AddScoped< MyClass >();
 
 ### TransientAs, ScopedAs, or SingletonAs attributes inject the implementation as the interface provided in the attribute.
 
