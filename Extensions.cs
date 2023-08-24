@@ -1,10 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-
-using Specky6.Exceptions;
-
 using System.Reflection;
 
-namespace Specky6;
+namespace Specky7;
 public static class Extensions
 {
     /// <summary>
@@ -35,97 +32,114 @@ public static class Extensions
         return serviceCollection;
     }
 
-    internal static IServiceCollection WithTypesAs<T>(this IServiceCollection serviceCollection, Type type, Action<T> action) where T : Attribute
-    {
-        var attributes = type.GetCustomAttributes().OfType<T>();
-        foreach (var attribute in attributes) action.Invoke(attribute);
-        return serviceCollection;
-    }
-
     internal static void Execute<T>(this IEnumerable<T> enumerable, Action<T> action)
     {
         foreach (var item in enumerable) action.Invoke(item);
     }
 
-    internal static void ScanTypeAndInject(IServiceCollection serviceCollection, Type type)
+    internal static void ScanTypeAndInject(this IServiceCollection serviceCollection, Type implementationType)
     {
-        serviceCollection.WithTypesAs<SingletonAttribute>(type, x => serviceCollection.AddSingleton(type));
-        serviceCollection.WithTypesAs<SingletonAsAttribute>(type, x => serviceCollection.AddSingleton(x.Type, type));
-
-        serviceCollection.WithTypesAs<TransientAttribute>(type, x => serviceCollection.AddTransient(type));
-        serviceCollection.WithTypesAs<TransientAsAttribute>(type, x => serviceCollection.AddTransient(x.Type, type));
-
-        serviceCollection.WithTypesAs<ScopedAttribute>(type, x => serviceCollection.AddScoped(type));
-        serviceCollection.WithTypesAs<ScopedAsAttribute>(type, x => serviceCollection.AddScoped(x.Type, type));
-
-        if (type.IsInterface)
+        var specks = ((SpeckAttribute[])implementationType.GetCustomAttributes(typeof(SpeckAttribute), false)).AsSpan();
+        foreach (var speck in specks)
         {
-            serviceCollection.WithTypesAs(type, (Action<SpeckyConfiguration>)(speckyConfigurationAttribute =>
+            var serviceType = speck.ServiceType ?? implementationType;
+            try
             {
-                ScanPropertiesAndInject(serviceCollection, type);
-                ScanFieldsAndInject(serviceCollection, type);
-                ScanMethodsAndInject(serviceCollection, type);
-            }));
+                serviceCollection.AddSpeck(serviceType, implementationType, speck.ServiceLifetime);
+            }
+            catch (TypeAccessException ex)
+            {
+                if (implementationType.IsInterface)
+                {
+                    serviceCollection.ScanPropertiesAndInject(implementationType);
+                    serviceCollection.ScanFieldsAndInject(implementationType);
+                    serviceCollection.ScanMethodsAndInject(implementationType);
+                    continue;
+                }
+                throw new TypeAccessException($"Specky could not inject service type {serviceType.Name} with implementation type {implementationType.Name} for an unknown reason.\n{speck.ServiceType?.Name ?? "null"}.{implementationType.Name}", ex);
+            }
         }
     }
 
-    private static void ScanMethodsAndInject(IServiceCollection serviceCollection, Type type)
+    internal static void ScanPropertiesAndInject(this IServiceCollection serviceCollection, Type type)
     {
-        type.GetMethods().Where(x => x.ReturnType != typeof(void)).ToList().ForEach(methodInfo =>
+        var propertyInfos = type.GetProperties().AsSpan();
+        foreach (var propertyInfo in propertyInfos)
         {
-            methodInfo.GetCustomAttributes<SpeckAttribute>().ToList().ForEach(speckAttribute =>
+            var specks = ((SpeckAttribute[])propertyInfo.GetCustomAttributes(typeof(SpeckAttribute), false)).AsSpan();
+            foreach (var speck in specks)
             {
-                _ = speckAttribute switch
+                try
                 {
-                    SingletonAttribute singletonAttribute => serviceCollection.AddSingleton(methodInfo.ReturnType),
-                    SingletonAsAttribute singletonAsAttribute => serviceCollection.AddSingleton(singletonAsAttribute.Type, methodInfo.ReturnType),
-                    TransientAttribute transientAttribute => serviceCollection.AddSingleton(methodInfo.ReturnType),
-                    TransientAsAttribute transientAsAttribute => serviceCollection.AddSingleton(transientAsAttribute.Type, methodInfo.ReturnType),
-                    ScopedAttribute scopedAttribute => serviceCollection.AddSingleton(methodInfo.ReturnType),
-                    ScopedAsAttribute scopedAsAttribute => serviceCollection.AddSingleton(scopedAsAttribute.Type, methodInfo.ReturnType),
-                    _ => throw new SpeckAttributeUnknownException(speckAttribute.GetType())
-                };
-            });
-        });
+                    serviceCollection.AddSpeck(speck.ServiceType ?? propertyInfo.PropertyType, propertyInfo.PropertyType, speck.ServiceLifetime);
+                }
+                catch (TypeAccessException ex)
+                {
+                    throw new TypeAccessException($"{speck.ServiceType?.Name ?? "null"}.{type.Name}.{propertyInfo.Name}.{propertyInfo.PropertyType.Name}", ex);
+                }
+            }
+        }
     }
 
-    private static void ScanFieldsAndInject(IServiceCollection serviceCollection, Type type)
+    internal static void ScanMethodsAndInject(this IServiceCollection serviceCollection, Type type)
     {
-        type.GetFields().ToList().ForEach(fieldInfo =>
+        foreach (var methodInfo in type.GetMethods().AsSpan())
         {
-            fieldInfo.GetCustomAttributes<SpeckAttribute>().ToList().ForEach(speckAttribute =>
+            foreach (var speck in ((SpeckAttribute[])methodInfo.GetCustomAttributes(typeof(SpeckAttribute), false)).AsSpan())
             {
-                _ = speckAttribute switch
+                var serviceType = speck.ServiceType ?? methodInfo.ReturnType;
+                var implementationType = methodInfo.ReturnType;
+                var serviceLifetime = speck.ServiceLifetime;
+
+                try
                 {
-                    SingletonAttribute singletonAttribute => serviceCollection.AddSingleton(fieldInfo.FieldType),
-                    SingletonAsAttribute singletonAsAttribute => serviceCollection.AddSingleton(singletonAsAttribute.Type, fieldInfo.FieldType),
-                    TransientAttribute transientAttribute => serviceCollection.AddSingleton(fieldInfo.FieldType),
-                    TransientAsAttribute transientAsAttribute => serviceCollection.AddSingleton(transientAsAttribute.Type, fieldInfo.FieldType),
-                    ScopedAttribute scopedAttribute => serviceCollection.AddSingleton(fieldInfo.FieldType),
-                    ScopedAsAttribute scopedAsAttribute => serviceCollection.AddSingleton(scopedAsAttribute.Type, fieldInfo.FieldType),
-                    _ => throw new SpeckAttributeUnknownException(speckAttribute.GetType())
-                };
-            });
-        });
+                    serviceCollection.AddSpeck(serviceType, implementationType, serviceLifetime);
+                }
+                catch (TypeAccessException ex)
+                {
+                    if (methodInfo.ReturnType == typeof(void) && speck is SpeckyConfigurationAttribute)
+                    {
+                        throw new TypeAccessException($"Specky configuration methods cannot return {typeof(void).Name}. The {nameof(methodInfo.ReturnType)} must be the {nameof(Type)} you want Specky to inject.\n{speck.ServiceType?.Name ?? typeof(void).Name}.{type.Name}.{methodInfo.Name}.{nameof(methodInfo.ReturnType.Name)}", ex);
+                    }
+                    throw;
+                }
+            }
+        }
     }
 
-    private static void ScanPropertiesAndInject(IServiceCollection serviceCollection, Type type)
+    internal static void ScanFieldsAndInject(this IServiceCollection serviceCollection, Type type)
     {
-        type.GetProperties().ToList().ForEach(propertyInfo =>
+        foreach (var fieldInfo in type.GetFields().AsSpan())
         {
-            propertyInfo.GetCustomAttributes<SpeckAttribute>().ToList().ForEach(speckAttribute =>
+            foreach (var speck in ((SpeckAttribute[])fieldInfo.GetCustomAttributes(typeof(SpeckAttribute), false)).AsSpan())
             {
-                _ = speckAttribute switch
+                var serviceType = speck.ServiceType ?? fieldInfo.FieldType;
+                var implementationType = fieldInfo.FieldType;
+                var serviceLifetime = speck.ServiceLifetime;
+
+                try
                 {
-                    SingletonAttribute singletonAttribute => serviceCollection.AddSingleton(propertyInfo.PropertyType),
-                    SingletonAsAttribute singletonAsAttribute => serviceCollection.AddSingleton(singletonAsAttribute.Type, propertyInfo.PropertyType),
-                    TransientAttribute transientAttribute => serviceCollection.AddSingleton(propertyInfo.PropertyType),
-                    TransientAsAttribute transientAsAttribute => serviceCollection.AddSingleton(transientAsAttribute.Type, propertyInfo.PropertyType),
-                    ScopedAttribute scopedAttribute => serviceCollection.AddSingleton(propertyInfo.PropertyType),
-                    ScopedAsAttribute scopedAsAttribute => serviceCollection.AddSingleton(scopedAsAttribute.Type, propertyInfo.PropertyType),
-                    _ => throw new SpeckAttributeUnknownException(speckAttribute.GetType())
-                };
-            });
-        });
+                    serviceCollection.AddSpeck(serviceType, implementationType, serviceLifetime);
+                }
+                catch (TypeAccessException ex)
+                {
+                    throw new TypeAccessException($"Specky could not inject service type {serviceType.Name} with implementation type {implementationType.Name} for an unknown reason.\n{speck.ServiceType?.Name ?? "null"}.{type.Name}.{fieldInfo.Name}.{nameof(fieldInfo.FieldType.Name)}", ex);
+                }
+            }
+        }
+    }
+
+    internal static void AddSpeck(this IServiceCollection serviceCollection, Type serviceType, Type implementationType, ServiceLifetime serviceLifetime)
+    {
+        if (!implementationType.IsAssignableTo(serviceType))
+        {
+            throw new TypeAccessException($"Specky cannot inject {implementationType.Name} type because it cannot be assigned to {serviceType.Name}.\n{serviceType.Name}.{implementationType.Name}");
+        }
+        if (implementationType.IsInterface)
+        {
+            throw new TypeAccessException($"Specky cannot inject {implementationType.Name} because it is an interface.\n{serviceType.Name}.{implementationType.Name}");
+        }
+        var serviceDescriptor = new ServiceDescriptor(serviceType, implementationType, serviceLifetime);
+        serviceCollection.Add(serviceDescriptor);
     }
 }
