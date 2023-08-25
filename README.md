@@ -181,3 +181,20 @@ Program.cs
         [Singleton] StartUp startup;
         [Singleton<IWorker>] Worker worker;
     }
+
+### Psuedo Example
+```
+builder.Services.AddSpecks<App>(opts =>
+{
+   opts.AddConfiguration<IFooConfiguration>();
+   opts.AddOption("Ok");
+});
+```
+```
+[SpeckyConfiguration(Option = "Ok")]
+interface IFooConfiguration
+{
+    [Singleton] Foo foo;
+    [Scoped<IWorker>] Worker worker;
+}
+```
