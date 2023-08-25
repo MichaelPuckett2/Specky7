@@ -110,10 +110,10 @@ interface IExampleConfiguration
 Program.cs
 
     using Microsoft.Extensions.Hosting;
-    using Specky6;
+    using Specky7;
 
     using IHost host = Host.CreateDefaultBuilder(args)
-        .ConfigureServices((_, services) => services.AddSpecks())
+        .ConfigureServices((_, services) => services.AddSpecks<StartUp>(opts => opts.UseConfiguratons = true))
         .Build();
 
     ((StartUp)host.Services.GetService(typeof(StartUp))!).Start();
@@ -157,6 +157,7 @@ Program.cs
     }
 
 ### Worker interface and implementation:
+
     public interface IWorker
     {
         void DoWork(Action action);
@@ -167,30 +168,16 @@ Program.cs
         public void DoWork(Action action) => action.Invoke();
     }
 
-### The specky configuration file:
-    using Specky6;
-    
+### The specky configuration file:   
     /* 
      * Note: Specky configurations do not get injected. 
      * The interface is used as a reference for Specky to locate and inject types.
-     * You can use properties or methods. 
+     * You can use properties, fields, or methods. 
      */
     [SpeckyConfiguration]
-    interface ISpeckyConfiguration
+    interface IExampleConfiguration
     {
-        /* 
-         * Method examples:
-         * Note: the method return type is what gets implemented.
-         * Replace ConsoleLog with TraceLog to inject TraceLog.
-         * Method names to not matter. 
-         */
-        [SingletonAs(typeof(ILogger))] ConsoleLogger GetLog();
-        [Singleton] StartUp GetStartUp();
-    
-        /* 
-         * Property example:
-         * Note: the property type is what gets implemented.
-         * Property names do not matter. 
-         */
-        [SingletonAs(typeof(IWorker))] Worker Worker { get; }
+        [Singleton<ILogger>] ConsoleLogger logger;
+        [Singleton] StartUp startup;
+        [Singleton<IWorker>] Worker worker;
     }
