@@ -11,13 +11,24 @@
 		<Authors>Michael Puckett, II</Authors>
 		<Company>TripleG3</Company>
 		<Copyright>@2023</Copyright>
-		<PackageProjectUrl>https://www.nuget.org/packages/Specky6</PackageProjectUrl>
+		<PackageProjectUrl>https://github.com/MichaelPuckett2/Specky7</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/MichaelPuckett2/Specky6</RepositoryUrl>
-		<PackageTags>dotnet, AspNet, NETCore, Dependency Injection, Specky, Blazor, IServiceProvider IServiceCollection, DI</PackageTags>
+		<PackageTags>dotnet, AspNet, NETCore, Dependency Injection, Attribute, Configuration, Specky, Blazor, IServiceProvider IServiceCollection, DI</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Include="..\LICENSE">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
