@@ -35,7 +35,7 @@ public class ExtensionsTests
             {
                 opts.AddConfiguration<IInvalidConfiguration>();
                 opts.AddConfiguration<IOkConfiguration>();
-                opts.AddOptions("Invalid");
+                opts.AddOption("Invalid");
             });
         });
     }
@@ -52,8 +52,8 @@ public class ExtensionsTests
             opts.AddConfiguration<IInvalidConfiguration>();
             opts.AddConfiguration<IOkConfiguration>();
             opts.AddConfiguration<IOk2Configuration>();
-            opts.AddOptions("Ok");
-            opts.AddOptions("Ok2");
+            opts.AddOption("Ok");
+            opts.AddOption("Ok2");
         });
 
         //Assert

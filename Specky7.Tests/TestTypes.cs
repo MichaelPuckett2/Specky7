@@ -1,4 +1,6 @@
-﻿namespace Specky7.Tests;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace Specky7.Tests;
 internal class A_Foo : IFooId, IFooTime
 {
     public int Id { get; set; }
@@ -27,7 +29,7 @@ internal class A_FooTime : IFooId
     public int Id { get; set; }
 }
 
-[Transient]
+[Speck(ServiceLifetime.Transient)]
 internal class B_FooTime : IFooId
 {
     public int Id { get; set; }

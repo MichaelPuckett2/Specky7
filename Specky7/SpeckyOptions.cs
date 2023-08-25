@@ -26,18 +26,16 @@ public class SpeckyOptions
         }
         throw new TypeAccessException($"{typeof(T).Name} must be an interface to be added as a speck configuration.\n{nameof(AddConfiguration)}<{typeof(T).Name}");
     }
-    public SpeckyOptions AddOptions(params string[] options)
+    public SpeckyOptions AddOption(string option)
     {
-        foreach (var option in options.AsSpan())
+        if (Options.Contains(option))
         {
-            if (Options.Contains(option))
-            {
-                throw new ArgumentException($"{option} was already added to the configuration options.\n{nameof(AddOptions)}");
-            }
-            Options.Add(option);
+            throw new ArgumentException($"{option} was already added to the configuration options.\n{nameof(AddOption)}");
         }
+        Options.Add(option);
         return this;
     }
+    public SpeckyOptions AddAssembly<T>() => AddAssemblies(new[] {  typeof(T).Assembly });
     public SpeckyOptions AddAssemblies(params Assembly[] assemblies)
     {
         foreach (var assembly in assemblies.AsSpan())
@@ -60,6 +58,6 @@ public class SpeckyOptions
 
     internal void AddConfigurations(Span<Type> speckyConfigurationTypes)
     {
-        foreach(var type in speckyConfigurationTypes) InterfaceTypes.Add(type);
+        foreach (var type in speckyConfigurationTypes) InterfaceTypes.Add(type);
     }
 }
