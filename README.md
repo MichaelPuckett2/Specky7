@@ -86,36 +86,21 @@ Singleton will inject a the same instance for the lifetime of the application.
 
 `[Singleton] public class MyClass { }` or `[Singleton<IMyClass>] public class MyClass : IMyClass { }`
 
-## Using Speck attributes across multiple projects / assemblies
-In order to scan for specks across multiple assemblies you need to pass those assemblies to the AddSpecks method.
-Note: Don't forget to include the assembly you are working in, assuming you will have Specks there also.
-
-```
-builder.Services.AddSpecks(new []
-{
-    typeof(Program).Assembly,
-    typeof(MyProject2.SomeNamespace.SomeType).Assembly,
-    typeof(MyProject3.AnotherNamespace.IInterfaceForSomething).Assembly
-});
-```
-
 # Using Configurations
-With Specky you can create an interface for injecting types in a single file.
+With Specky you can create an interface for injecting types in one or more locations.
 
 To use configurations you will need to first make any `interface` and then add the `SpeckyConfigurationAttribute` to that `interface`.
 
 Next add the properties or methods with the proper injection attribute.
 
-Note: The `SpeckyConfiguration` does not get injected.  It is used as a lookup for other types only and happens at startup. This is not to be confused or considered as a factory or any other magic utility. This simply saves you from having to type `builder.Services.AddScoped<MyClass>();` and form having to place a `SpeckAttribute` on any classes.  It lets you keep the configuration one or more files to make it easier to navigate and modify.
-
-> The following will inject the `StartUp` type as a `Singleton`, the `TraceLogger` as `Transient` abstracted by `ILogger`, and the `Worker` as `Scoped` abstracted by the `IWorker` interface.
+Note: The property, field, and method names do not matter. Specky only looks for the type or return type and the attribute applied. You can also combine an existing interface with auto injection this way.
 ```
 [SpeckyConfiguration]
-interface ISpeckyConfiguration
+interface IExampleConfiguration
 {
-    [Singleton] StartUp GetStartUp();        
-    [TransientAs(typeof(ILogger))] TraceLogger GetLog();
-    [ScopedAs(typeof(IWorker))] Worker GetWorker();
+    [Singleton] Reader reader;               //Makes Reader the service type and the implementation type as a singleton
+    [Transient<ILogger>] TraceLogger logger; //Makes ILogger the service type and TraceLogger the implementation type as transient
+    [Scoped<IWorker>] Worker worker;         //Makes IWorker the service type and Worker the implementation type as scoped
 }
 ```
 
