@@ -3,8 +3,31 @@ Lightweight wrapper to assist injection, using attributes, using the built in DI
 
 ## Required at builder.Services to add Specks (may include other assemblies)
 
-`builder.Services.AddSpecks<T>();`
+`builder.Services.AddSpecks<T>();` `T` helps Specky infer the assemlbly to use so `T` should be part of the assembly you want scanned.
+If you want to scan multiple assemblies you can with options
+```
+serviceProvider.AddSpecks(opts =>
+{
+    opts.AddAssembly<App>();
+    opts.AddAssembly<MyCustomPackage>();
+    opts.AddAssembly<MyCustomDll>();
+});
+```
 
+You may also provide interfaces (instructions later in this read me) that will be used for the types to inject.
+Note: You do not need to specify an assembly if you are using configurations because the types will be infered at that time.
+
+```
+serviceProvider.AddSpecks(opts =>
+{
+    opts.AddConfiguration<IProdConfiguration>();
+    opts.AddConfiguration<IUatConfiguration>();
+    opts.AddConfiguration<IDevConfiguration>();
+    opts.AddOptions("Dev");
+});
+```
+
+If you want to speck out your types for auto injection you can do so by placing a speck attribute on the type.  Specky will locate the type and inject it automatically.
 ## Examples (If you're familiar with .NET's built in injection then the naming here should be straight forward.)
 
 ### Transient, Scoped, or Singleton attributes inject the type as the implementation. 
