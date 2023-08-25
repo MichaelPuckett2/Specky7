@@ -67,27 +67,24 @@ public class ExtensionsTests
         IServiceCollection serviceProvider = new MockServiceCollecton();
 
         //Act
-        serviceProvider.AddSpecks(opts =>
-        {
-            opts.AddAssemblies(typeof(ExtensionsTests).Assembly);
-        });
+        serviceProvider.AddSpecks<ExtensionsTests>();
 
         //Assert
         Assert.AreEqual(4, serviceProvider.Count);
-        var a = serviceProvider.Any(x => x.ServiceType == typeof(IFooTime) 
-        && x.ImplementationType == typeof(B_Foo) 
+        var a = serviceProvider.Any(x => x.ServiceType == typeof(IFooTime)
+        && x.ImplementationType == typeof(B_Foo)
         && x.Lifetime == ServiceLifetime.Singleton);
 
-        var b = serviceProvider.Any(x => x.ServiceType == typeof(IFooId) 
-        && x.ImplementationType == typeof(B_Foo) 
+        var b = serviceProvider.Any(x => x.ServiceType == typeof(IFooId)
+        && x.ImplementationType == typeof(B_Foo)
         && x.Lifetime == ServiceLifetime.Scoped);
 
-        var c = serviceProvider.Any(x => x.ServiceType == typeof(A_FooTime) 
-        && x.ImplementationType == typeof(A_FooTime) 
+        var c = serviceProvider.Any(x => x.ServiceType == typeof(A_FooTime)
+        && x.ImplementationType == typeof(A_FooTime)
         && x.Lifetime == ServiceLifetime.Singleton);
 
-        var d = serviceProvider.Any(x => x.ServiceType == typeof(B_FooTime) 
-        && x.ImplementationType == typeof(B_FooTime) 
+        var d = serviceProvider.Any(x => x.ServiceType == typeof(B_FooTime)
+        && x.ImplementationType == typeof(B_FooTime)
         && x.Lifetime == ServiceLifetime.Transient);
 
         Assert.IsTrue(a);

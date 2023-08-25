@@ -7,16 +7,23 @@ public static class Extensions
 {
     internal static readonly SpeckyOptions SpeckyOptions = new();
 
-    public static IServiceCollection AddSpecks(this IServiceCollection serviceCollection)
-        => serviceCollection.AddSpecks(opt => { });
+    public static IServiceCollection AddSpecks<T>(this IServiceCollection serviceCollection)
+        => serviceCollection.AddSpecks(opt => opt.AddAssemblies(typeof(T).Assembly));
+
+    public static IServiceCollection AddSpecks<T>(this IServiceCollection serviceCollection, Action<SpeckyOptions> options)
+    {
+        SpeckyOptions.AddAssemblies(typeof(T).Assembly);
+        return serviceCollection.AddSpecks(options);
+    }
 
     public static IServiceCollection AddSpecks(this IServiceCollection serviceCollection, Action<SpeckyOptions> options)
     {
+        var assembly = Assembly.GetEntryAssembly();
         SpeckyOptions.Clear();
         options(SpeckyOptions);
         if (SpeckyOptions.Assemblies.Count == 0)
         {
-            SpeckyOptions.AddAssemblies(Assembly.GetCallingAssembly());
+            SpeckyOptions.AddAssemblies(Assembly.GetExecutingAssembly());
         }
 
         if (SpeckyOptions.InterfaceTypes.Count > 0)
