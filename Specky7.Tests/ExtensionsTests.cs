@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections;
 
 namespace Specky7.Tests;
 
@@ -8,52 +7,92 @@ namespace Specky7.Tests;
 public class ExtensionsTests
 {
     [TestMethod()]
-    public void AddSpecksTest()
+    public void AddInvalidConfigurationTest()
     {
         //Arrange
         IServiceCollection serviceProvider = new MockServiceCollecton();
 
         //Act and Assert
-        Assert.ThrowsException<TypeAccessException>(() => serviceProvider.AddSpecks());
+        Assert.ThrowsException<TypeAccessException>(() =>
+        {
+            serviceProvider.AddSpecks(opts =>
+            {
+                opts.AddConfiguration<IInvalidConfiguration>();
+            });
+        });
     }
-}
 
-internal class MockServiceCollecton : IServiceCollection
-{
-    readonly List<ServiceDescriptor> services = new();
-    public ServiceDescriptor this[int index] { get => services[index]; set => services[index] = value; }
-    public int Count => services.Count;
-    public bool IsReadOnly => true;
-    public void Add(ServiceDescriptor item) => services.Add(item);
-    public void Clear() => services.Clear();
-    public bool Contains(ServiceDescriptor item) => services.Contains(item);
-    public void CopyTo(ServiceDescriptor[] array, int arrayIndex) => services.CopyTo(array, arrayIndex);
-    public IEnumerator<ServiceDescriptor> GetEnumerator() => services.GetEnumerator();
-    public int IndexOf(ServiceDescriptor item) => services.IndexOf(item);
-    public void Insert(int index, ServiceDescriptor item) => services.Insert(index, item);
-    public bool Remove(ServiceDescriptor item) => services.Remove(item);
-    public void RemoveAt(int index) => services.RemoveAt(index);
-    IEnumerator IEnumerable.GetEnumerator() => services.GetEnumerator();
-}
+    [TestMethod()]
+    public void AddInvalidOptionTest()
+    {
+        //Arrange
+        IServiceCollection serviceProvider = new MockServiceCollecton();
 
-[SpeckyConfiguration]
-interface ISpeckConfiguration
-{
-    [Singleton]
-    A_Foo A_Foo { get; set; }
+        //Act and Assert
+        Assert.ThrowsException<TypeAccessException>(() =>
+        {
+            serviceProvider.AddSpecks(opts =>
+            {
+                opts.AddConfiguration<IInvalidConfiguration>();
+                opts.AddConfiguration<IOkConfiguration>();
+                opts.AddOptions("Invalid");
+            });
+        });
+    }
 
-    [Scoped]
-    IFooId A_FooId { get; set; }
+    [TestMethod()]
+    public void AddOkOptionTest()
+    {
+        //Arrange
+        IServiceCollection serviceProvider = new MockServiceCollecton();
 
-    [Speck]
-    A_FooTime A_FooTime { get; set;}
+        //Act
+        serviceProvider.AddSpecks(opts =>
+        {
+            opts.AddConfiguration<IInvalidConfiguration>();
+            opts.AddConfiguration<IOkConfiguration>();
+            opts.AddConfiguration<IOk2Configuration>();
+            opts.AddOptions("Ok");
+            opts.AddOptions("Ok2");
+        });
 
+        //Assert
+        Assert.AreEqual(4, serviceProvider.Count);
+    }
 
-    B_Foo B_Foo { get; set; }
+    [TestMethod()]
+    public void AddSpecksScanningTest()
+    {
+        //Arrange
+        IServiceCollection serviceProvider = new MockServiceCollecton();
 
+        //Act
+        serviceProvider.AddSpecks(opts =>
+        {
+            opts.AddAssemblies(typeof(ExtensionsTests).Assembly);
+        });
 
-    B_FooId B_FooId { get; set; }
+        //Assert
+        Assert.AreEqual(4, serviceProvider.Count);
+        var a = serviceProvider.Any(x => x.ServiceType == typeof(IFooTime) 
+        && x.ImplementationType == typeof(B_Foo) 
+        && x.Lifetime == ServiceLifetime.Singleton);
 
+        var b = serviceProvider.Any(x => x.ServiceType == typeof(IFooId) 
+        && x.ImplementationType == typeof(B_Foo) 
+        && x.Lifetime == ServiceLifetime.Scoped);
 
-    B_FooTime B_FooTime { get; set; }
+        var c = serviceProvider.Any(x => x.ServiceType == typeof(A_FooTime) 
+        && x.ImplementationType == typeof(A_FooTime) 
+        && x.Lifetime == ServiceLifetime.Singleton);
+
+        var d = serviceProvider.Any(x => x.ServiceType == typeof(B_FooTime) 
+        && x.ImplementationType == typeof(B_FooTime) 
+        && x.Lifetime == ServiceLifetime.Transient);
+
+        Assert.IsTrue(a);
+        Assert.IsTrue(b);
+        Assert.IsTrue(c);
+        Assert.IsTrue(d);
+    }
 }

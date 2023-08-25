@@ -21,13 +21,13 @@ public class SpeckAttribute<T> : SpeckAttribute where T : class
 }
 
 public class SingletonAttribute : SpeckAttribute { }
-public class SingletonAttribute<T> : SpeckAttribute where T : class { }
+public class SingletonAttribute<T> : SpeckAttribute<T> where T : class { }
 
 public class ScopedAttribute : SpeckAttribute
 {
     public ScopedAttribute() : base(ServiceLifetime.Scoped) { }
 }
-public class ScopedAttribute<T> : SpeckAttribute where T : class
+public class ScopedAttribute<T> : SpeckAttribute<T> where T : class
 {
     public ScopedAttribute() : base(ServiceLifetime.Scoped) { }
 }
@@ -36,10 +36,7 @@ public class TransientAttribute : SpeckAttribute
 {
     public TransientAttribute() : base(ServiceLifetime.Transient) { }
 }
-public class TransientAttribute<T> : SpeckAttribute where T : class
+public class TransientAttribute<T> : SpeckAttribute<T> where T : class
 {
     public TransientAttribute() : base(ServiceLifetime.Transient) { }
 }
-
-[AttributeUsage(AttributeTargets.Interface)]
-public class SpeckyConfigurationAttribute : SpeckAttribute { }

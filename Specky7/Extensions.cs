@@ -1,42 +1,87 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Specky7;
 public static class Extensions
 {
-    /// <summary>
-    /// Scans the calling assembly and injects specks into the IServiceCollection.
-    /// </summary>
-    /// <param name="serviceCollection">The IServiceCollection in use.</param>
-    /// <param name="assemblies">The assemblies to scan.</param>
-    /// <returns>The same IServiceCollection in use.</returns>
+    internal static readonly SpeckyOptions SpeckyOptions = new();
+
     public static IServiceCollection AddSpecks(this IServiceCollection serviceCollection)
+        => serviceCollection.AddSpecks(opt => { });
+
+    public static IServiceCollection AddSpecks(this IServiceCollection serviceCollection, Action<SpeckyOptions> options)
     {
-        Assembly.GetCallingAssembly()
-            .GetTypes()
-            .Execute(type => ScanTypeAndInject(serviceCollection, type));
+        SpeckyOptions.Clear();
+        options(SpeckyOptions);
+        if (SpeckyOptions.Assemblies.Count == 0)
+        {
+            SpeckyOptions.AddAssemblies(Assembly.GetCallingAssembly());
+        }
+
+        if (SpeckyOptions.InterfaceTypes.Count > 0)
+        {
+            return InjectInterfaceConfigurationsOnly(serviceCollection);
+        }
+
+        if (SpeckyOptions.UseConfigurations)
+        {
+            var speckyConfigurationTypes = SpeckyOptions
+                .Assemblies
+                .SelectMany(assembly => assembly
+                .GetTypes()
+                .Where(type => type.GetCustomAttributes(typeof(SpeckyConfigurationAttribute), false).Length > 0))
+                .ToArray().AsSpan();
+
+            if (speckyConfigurationTypes.Length == 0)
+            {
+                throw new TypeAccessException($"Specky was expected to inject with configurations but none was found."); ;
+            }
+            SpeckyOptions.AddConfigurations(speckyConfigurationTypes);
+            return InjectInterfaceConfigurationsOnly(serviceCollection);
+        }
+
+        var speckTypes = SpeckyOptions.Assemblies.SelectMany(assembly => assembly.GetTypes());
+        foreach (var implementationType in speckTypes)
+        {
+            serviceCollection.ScanTypeAndInject(implementationType);
+        }
         return serviceCollection;
     }
 
-    /// <summary>
-    /// Scans the requested assemblies and injects specks into the IServiceCollection.
-    /// </summary>
-    /// <param name="serviceCollection">The IServiceCollection in use.</param>
-    /// <param name="assemblies">The assemblies to scan.</param>
-    /// <returns>The same IServiceCollection in use.</returns>
-    public static IServiceCollection AddSpecks(this IServiceCollection serviceCollection, IEnumerable<Assembly> assemblies)
+    private static IServiceCollection InjectInterfaceConfigurationsOnly(IServiceCollection serviceCollection)
     {
-        assemblies
-            .SelectMany(x => x.GetTypes())
-            .Execute(type => ScanTypeAndInject(serviceCollection, type));
+        foreach (var iface in SpeckyOptions.InterfaceTypes)
+        {
+            var speckyConfigurationAttribute = iface.GetCustomAttribute<SpeckyConfigurationAttribute>();
+            if (speckyConfigurationAttribute == null) continue;
+
+            if (SpeckyOptions.Options.Count > 0)
+            {
+                InjectInterfaceConfigurationsWithOptionsOnly(serviceCollection, iface, speckyConfigurationAttribute);
+                continue;
+            }
+            ScanAndInjectInterace(serviceCollection, iface);
+        }
         return serviceCollection;
     }
 
-    internal static void Execute<T>(this IEnumerable<T> enumerable, Action<T> action)
+    private static void InjectInterfaceConfigurationsWithOptionsOnly(IServiceCollection serviceCollection, Type iface, SpeckyConfigurationAttribute speckyConfigurationAttribute)
     {
-        foreach (var item in enumerable) action.Invoke(item);
+        if (SpeckyOptions.Options.Contains(speckyConfigurationAttribute.Option))
+        {
+            ScanAndInjectInterace(serviceCollection, iface);
+        }
     }
 
+    private static void ScanAndInjectInterace(IServiceCollection serviceCollection, Type iface)
+    {
+        serviceCollection.ScanPropertiesAndInject(iface);
+        serviceCollection.ScanFieldsAndInject(iface);
+        serviceCollection.ScanMethodsAndInject(iface);
+    }
+
+    //Primary - called first when needing to locate all specks and attempt injecting all.
     internal static void ScanTypeAndInject(this IServiceCollection serviceCollection, Type implementationType)
     {
         var specks = ((SpeckAttribute[])implementationType.GetCustomAttributes(typeof(SpeckAttribute), false)).AsSpan();
@@ -49,13 +94,6 @@ public static class Extensions
             }
             catch (TypeAccessException ex)
             {
-                if (implementationType.IsInterface)
-                {
-                    serviceCollection.ScanPropertiesAndInject(implementationType);
-                    serviceCollection.ScanFieldsAndInject(implementationType);
-                    serviceCollection.ScanMethodsAndInject(implementationType);
-                    continue;
-                }
                 throw new TypeAccessException($"Specky could not inject service type {serviceType.Name} with implementation type {implementationType.Name} for an unknown reason.\n{speck.ServiceType?.Name ?? "null"}.{implementationType.Name}", ex);
             }
         }
