@@ -4,10 +4,12 @@ namespace Specky7;
 
 public class SpeckyOptions
 {
-    internal HashSet<Type> InterfaceTypes { get; } = new();
+    internal HashSet<Type> Configurations { get; } = new();
     internal HashSet<string> Options { get; } = new();
     internal HashSet<Assembly> Assemblies { get; } = new();
-    public bool UseConfigurations { get; set; }
+    public bool UseConfigurationsOnly { get; set; }
+    internal HashSet<Type> ConfigurationAddedServiceTypes { get; } = new();
+
     public SpeckyOptions AddConfiguration<T>()
     {
         if (typeof(T).IsInterface)
@@ -16,12 +18,11 @@ public class SpeckyOptions
             {
                 throw new TypeAccessException($"{typeof(T).Name} must have the {nameof(SpeckyConfigurationAttribute)} to be used as a speck configuration interface.\n{nameof(AddConfiguration)}<{typeof(T).Name}>");
             }
-            if (InterfaceTypes.Contains(typeof(T)))
+            if (Configurations.Contains(typeof(T)))
             {
                 throw new TypeAccessException($"{typeof(T).Name} was already added to the configuration interfaces.\n{nameof(AddConfiguration)}<{typeof(T).Name}");
             }
-            InterfaceTypes.Add(typeof(T));
-            UseConfigurations = true;
+            Configurations.Add(typeof(T));
             return this;
         }
         throw new TypeAccessException($"{typeof(T).Name} must be an interface to be added as a speck configuration.\n{nameof(AddConfiguration)}<{typeof(T).Name}");
@@ -50,14 +51,14 @@ public class SpeckyOptions
     }
     public void Clear()
     {
-        InterfaceTypes.Clear();
+        Configurations.Clear();
         Options.Clear();
         Assemblies.Clear();
-        UseConfigurations = false;
+        UseConfigurationsOnly = false;
     }
 
     internal void AddConfigurations(Span<Type> speckyConfigurationTypes)
     {
-        foreach (var type in speckyConfigurationTypes) InterfaceTypes.Add(type);
+        foreach (var type in speckyConfigurationTypes) Configurations.Add(type);
     }
 }
