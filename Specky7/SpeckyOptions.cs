@@ -54,6 +54,7 @@ public class SpeckyOptions
         Configurations.Clear();
         Options.Clear();
         Assemblies.Clear();
+        ConfigurationAddedServiceTypes.Clear();
         UseConfigurationsOnly = false;
     }
 
