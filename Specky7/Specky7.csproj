@@ -5,7 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<WarningsAsErrors>Nullable</WarningsAsErrors>
-		<Version>7.0.2</Version>
+		<Version>7.0.3</Version>
 		<Title>Specky</Title>
 		<Description>Assist injection, using attributes, using the built in DI model integrated in .NET 7 and up.</Description>
 		<Authors>Michael Puckett, II</Authors>
@@ -31,6 +31,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
 	</ItemGroup>
 

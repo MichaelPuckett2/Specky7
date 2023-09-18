@@ -12,6 +12,7 @@ public class SpeckAttribute : Attribute
     }
     public ServiceLifetime ServiceLifetime { get; init; }
     public Type? ServiceType { get; init; }
+    internal bool IsPostInit { get; set; }
 }
 
 public class SpeckAttribute<T> : SpeckAttribute where T : class
@@ -39,4 +40,14 @@ public class TransientAttribute : SpeckAttribute
 public class TransientAttribute<T> : SpeckAttribute<T> where T : class
 {
     public TransientAttribute() : base(ServiceLifetime.Transient) { }
+}
+
+public class SingletonPostInitAttribute : SpeckAttribute
+{
+    public SingletonPostInitAttribute() : base(ServiceLifetime.Singleton) { IsPostInit = true; }
+}
+
+public class SingletonPostInitAttribute<T> : SpeckAttribute<T> where T : class
+{
+    public SingletonPostInitAttribute() : base(ServiceLifetime.Singleton) { IsPostInit = true; }
 }

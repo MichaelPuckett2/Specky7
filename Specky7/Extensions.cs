@@ -1,11 +1,21 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace Specky7;
 public static class Extensions
 {
     internal static readonly SpeckyOptions SpeckyOptions = new();
+    internal static readonly HashSet<SpeckAttribute> SpeckyInitAttributes = new();
 
+    public static IApplicationBuilder UseSpeckyPostSpecks(this IApplicationBuilder app)
+    {
+        foreach (var speckyInitAttribute in SpeckyInitAttributes)
+        {
+            _ = app.ApplicationServices.GetService(speckyInitAttribute.ServiceType!);
+        }
+        return app;
+    }
     public static IServiceCollection AddSpecks<T>(this IServiceCollection serviceCollection)
         => serviceCollection.AddSpecks(opt => opt.AddAssembly<T>());
 
@@ -106,6 +116,8 @@ public static class Extensions
             {
                 throw new TypeAccessException($"Specky could not inject service type {serviceType.Name} with implementation type {implementationType.Name} for an unknown reason.\n{speck.ServiceType?.Name ?? "null"}.{implementationType.Name}", ex);
             }
+
+            if (speck.IsPostInit) SpeckyInitAttributes.Add(speck);
         }
     }
 
